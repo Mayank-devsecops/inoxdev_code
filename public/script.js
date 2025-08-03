@@ -1,3 +1,9 @@
+// Supabase configuration
+const SUPABASE_URL = 'https://flqtifvlehyerfmzfjqb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscXRpZnZsZWh5ZXJmbXpmanFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxNjMyMjgsImV4cCI6MjA2OTczOTIyOH0.7jziAQg_2_6Ag6HNhb6Riv1yF4n3JURM7Q6a15Q7u88';
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 // Global variables
 let currentTestimonial = 0;
 const testimonials = document.querySelectorAll('.testimonial');
@@ -265,7 +271,7 @@ function closeMessageBox() {
     document.body.style.overflow = 'auto'; // Restore scrolling
 }
 
-// Contact form submission
+// Contact form submission with Supabase integration
 async function handleContactSubmit(event) {
     event.preventDefault();
     
@@ -273,7 +279,7 @@ async function handleContactSubmit(event) {
     const submitButton = document.getElementById('contact-submit');
     const spinner = document.getElementById('contact-spinner');
     const successMessage = document.getElementById('contact-success');
-    const projectSuggestionsOutput = document.getElementById('project-suggestions-output'); // Get the suggestions div
+    const projectSuggestionsOutput = document.getElementById('project-suggestions-output');
     
     // Validate all fields
     const inputs = form.querySelectorAll('.form-input[required]');
@@ -296,8 +302,28 @@ async function handleContactSubmit(event) {
     submitButton.disabled = true;
     
     try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Collect form data
+        const formData = {
+            name: form.name.value.trim(),
+            email: form.email.value.trim(),
+            company: form.company.value.trim() || null,
+            service: form.service.value || null,
+            budget: form.budget.value || null,
+            message: form.message.value.trim(),
+            created_at: new Date().toISOString()
+        };
+        
+        // Insert data into Supabase
+        const { data, error } = await supabaseClient
+            .from('contact_submissions')
+            .insert([formData]);
+        
+        if (error) {
+            console.error('Supabase error:', error);
+            throw new Error('Failed to save contact information');
+        }
+        
+        console.log('Contact form submitted successfully:', data);
         
         // Show success message
         successMessage.style.display = 'block';
@@ -328,8 +354,6 @@ async function handleContactSubmit(event) {
         submitButton.disabled = false;
     }
 }
-
-// Removed Login form submission (handleLoginSubmit) as per request
 
 // FAQ functionality
 function toggleFaq(element) {
@@ -584,26 +608,6 @@ document.addEventListener('click', function(event) {
     }
 });
 
-function showForgotPassword() {
-    showMessageBox('Password Reset', 'In a real application, this would open a password reset form or redirect to a password reset page.');
-}
-
-function toggleTheme() {
-    const body = document.body;
-    const themeButton = document.querySelector('.theme-toggle');
-    
-    body.classList.toggle('light-theme');
-    
-    if (body.classList.contains('light-theme')) {
-        themeButton.textContent = '☀️';
-        // In a real application, you would save this preference
-        localStorage.setItem('theme', 'light');
-    } else {
-        themeButton.textContent = '🌙';
-        localStorage.setItem('theme', 'dark');
-    }
-}
-
 // Function to get project suggestions using Gemini API
 async function getProjectSuggestions() {
     const projectDetailsInput = document.getElementById('message');
@@ -642,7 +646,7 @@ Keep the response professional, concise, and encouraging.`;
         let chatHistory = [];
         chatHistory.push({ role: "user", parts: [{ text: prompt }] });
         const payload = { contents: chatHistory };
-        const apiKey = "AIzaSyCFl6EaYLi73u0gNxv2YL4-eP7K09t2Xwg"; // Leave as-is, Canvas will provide it
+        const apiKey = "AIzaSyCFl6EaYLi73u0gNxv2YL4-eP7K09t2Xwg";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
         let response;
