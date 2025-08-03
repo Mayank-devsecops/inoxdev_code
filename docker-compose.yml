@@ -33,7 +33,7 @@ services:
 
   # Backend API
   backend:
-    build: .
+    image: mayank8765/inoxdev:latest
     container_name: inoxdev-backend
     restart: unless-stopped
     environment:
